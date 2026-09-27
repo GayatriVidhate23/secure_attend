@@ -1,0 +1,219 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SecureAttend AI API",
+    "version": "1.0.0",
+    "description": "REST API for SecureAttend AI Mobile App and React Admin Web Portal."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "System Health Check",
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "User Login",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "identifier": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Refresh Access Token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh_token": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success" },
+          "401": { "description": "Invalid refresh token" }
+        }
+      }
+    },
+    "/mobile/me": {
+      "get": {
+        "summary": "Get Mobile Profile",
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/student/face-verification/challenge": {
+      "post": {
+        "summary": "Request Liveness Challenge",
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/student/face-verification/verify": {
+      "post": {
+        "summary": "Verify Face (Liveness & 1:1 Match)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Success - Face Proof Token returned" },
+          "400": { "description": "Liveness Failed" },
+          "403": { "description": "Verification Failed" }
+        }
+      }
+    },
+    "/student/attendance/mark": {
+      "post": {
+        "summary": "Submit Attendance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "qr_token": { "type": "string" },
+                  "face_proof_token": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Attendance marked" },
+          "400": { "description": "Invalid Request" },
+          "409": { "description": "Duplicate Submission" },
+          "410": { "description": "Expired QR" }
+        }
+      }
+    },
+    "/faculty/attendance-sessions": {
+      "post": {
+        "summary": "Start Attendance Session",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "schedule_id": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Session created" }
+        }
+      }
+    },
+    "/faculty/attendance-sessions/{session_id}/qr": {
+      "get": {
+        "summary": "Get latest QR code token",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" },
+          "404": { "description": "Session not found" }
+        }
+      }
+    },
+    "/faculty/attendance-sessions/{session_id}/live": {
+      "get": {
+        "summary": "Poll Live Attendance",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    },
+    "/faculty/attendance-sessions/{session_id}/end": {
+      "post": {
+        "summary": "End active session",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Success" }
+        }
+      }
+    }
+  }
+}

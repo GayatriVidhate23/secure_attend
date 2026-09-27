@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Node / Admin Web
+node_modules/
+apps/admin-web/dist/
+apps/admin-web/.vite/
+*.local
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+
+# Biometric and temporary captures
+data/face_captures/
+data/temp/
+data/enrollment_samples/
+*.raw_face.*
+
+# ML model cache (keep structure, ignore downloaded weights)
+ml/models/cache/
+*.onnx
+!ml/models/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+
+# Export artifacts (regenerated)
+# docs/api/openapi.json is tracked intentionally as API contract
+
+# Alembic
+# migrations/versions/*.py are tracked
