@@ -26,6 +26,7 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
   bool _isLoading = true;
   Map<String, dynamic>? _statsData;
   List<dynamic>? _historyData;
+  List<dynamic> _todayClasses = [];
   
   @override
   void initState() {
@@ -65,6 +66,16 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
           } else {
             _historyData = [];
           }
+          
+          try {
+            final timetableRes = await ApiClient.get('/timetable/today');
+            if (timetableRes.statusCode == 200) {
+              _todayClasses = jsonDecode(timetableRes.body);
+            }
+          } catch (e) {
+            // ignore
+          }
+          
           _isLoading = false;
         });
       }
@@ -92,6 +103,19 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
     if (percentage >= 75) return 'Healthy';
     if (percentage >= 60) return 'Attention Needed';
     return 'Critical';
+  }
+
+  String _getClassStatus(dynamic entry) {
+    final now = DateTime.now();
+    final currentMins = now.hour * 60 + now.minute;
+    final startParts = entry['start_time'].split(':');
+    final endParts = entry['end_time'].split(':');
+    final startMins = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+    final endMins = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
+    
+    if (currentMins < startMins - 30) return 'upcoming';
+    if (currentMins >= startMins - 30 && currentMins <= endMins) return 'active';
+    return 'completed';
   }
 
   Widget _buildPulse() {
@@ -276,10 +300,10 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
             
             const SizedBox(height: 24),
             
-            // Mark Attendance Button
-            FilledButton.icon(
-              onPressed: () async {
-                if (!widget.isEnrolled) {
+            // Today's Classes and Mark Attendance
+            if (!widget.isEnrolled)
+              FilledButton.icon(
+                onPressed: () async {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const StudentFaceEnrollment()),
@@ -287,20 +311,84 @@ class _StudentHomeTabState extends State<StudentHomeTab> {
                   if (result == true) {
                     context.read<AuthService>().fetchProfile();
                   }
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const StudentQrScanner()),
-                  );
-                }
-              },
-              icon: Icon(widget.isEnrolled ? Icons.qr_code_scanner : Icons.camera_front),
-              label: Text(widget.isEnrolled ? 'Mark Attendance' : 'Enroll Identity Profile'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Theme.of(context).colorScheme.primary,
+                },
+                icon: const Icon(Icons.camera_front),
+                label: const Text('Enroll Identity Profile'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                ),
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text("TODAY's CLASSES", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                  const SizedBox(height: 12),
+                  if (_todayClasses.isEmpty)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: const Center(child: Text("No classes scheduled for today.", style: TextStyle(color: Colors.grey))),
+                      ),
+                    )
+                  else
+                    ..._todayClasses.map((entry) {
+                      final status = _getClassStatus(entry);
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                            color: status == 'active' ? Colors.green.withValues(alpha: (0.5) : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3), 
+                            width: status == 'active' ? 2 : 1
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('${entry['start_time']} - ${entry['end_time']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(
+                                    status.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 10, 
+                                      fontWeight: FontWeight.bold,
+                                      color: status == 'active' ? Colors.green : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(entry['subject_name'] ?? '', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              Text('Prof. ${entry['faculty_name']} | Room: ${entry['room'] ?? 'TBA'}', style: Theme.of(context).textTheme.bodyMedium),
+                              const SizedBox(height: 12),
+                              if (status == 'active')
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton.icon(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => const StudentQrScanner()),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.qr_code_scanner),
+                                    label: const Text('Mark Attendance'),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                ],
               ),
-            ),
             
             const SizedBox(height: 24),
             

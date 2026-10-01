@@ -44,7 +44,10 @@ export default function DashboardLayout() {
           <NavItem to="/subjects" icon={<BookOpen size={20} />} label="Subjects" />
           <NavItem to="/divisions" icon={<Users size={20} />} label="Divisions" />
           <NavItem to="/attendance" icon={<Calendar size={20} />} label="Attendance Sessions" />
-          <NavItem to="/live-session" icon={<QrCode size={20} />} label="Live Session / QR" />
+                    <NavItem to="/live-session" icon={<QrCode size={20} />} label="Live Session / QR" />
+          {user?.role === 'ADMIN' && (
+            <NavItem to="/timetable" icon={<Calendar size={20} />} label="Manage Timetable" />
+          )}
           <NavItem to="/reports" icon={<FileText size={20} />} label="Reports" />
           <NavItem to="/settings" icon={<Settings size={20} />} label="Settings" />
         </div>

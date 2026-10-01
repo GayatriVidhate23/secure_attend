@@ -5,7 +5,7 @@ from typing import List
 from datetime import datetime, timezone
 
 from database import get_db
-from models import AttendanceSession, Faculty, Subject, Division, User, RoleName
+from models import AttendanceSession, Faculty, Subject, Division, User, RoleName, TimetableEntry
 from dependencies import require_role, require_admin, require_admin_or_faculty, get_faculty_scopes, get_current_user
 from schemas import AttendanceSessionCreate, AttendanceSessionResponse, LiveAttendanceResponse
 from security import create_attendance_qr_token
@@ -49,10 +49,47 @@ def create_session(session_data: AttendanceSessionCreate, db: Session = Depends(
     if not division:
         raise HTTPException(status_code=404, detail="Division not found")
 
+    # Smart Timetable Validation
+    timetable_id = None
+    if current_user.role.name != RoleName.ADMIN:
+        current_time = datetime.now()
+        day_of_week = current_time.weekday()
+        current_mins = current_time.hour * 60 + current_time.minute
+        
+        entries = db.query(TimetableEntry).filter(
+            TimetableEntry.faculty_id == session_data.faculty_id,
+            TimetableEntry.subject_id == session_data.subject_id,
+            TimetableEntry.division_id == session_data.division_id,
+            TimetableEntry.day_of_week == day_of_week
+        ).all()
+        
+        is_valid_time = False
+        for entry in entries:
+            try:
+                sh, sm = map(int, entry.start_time.split(':'))
+                eh, em = map(int, entry.end_time.split(':'))
+                start_mins = sh * 60 + sm
+                end_mins = eh * 60 + em
+                
+                # Allow starting 30 mins before class, until the class ends
+                if (start_mins - 30) <= current_mins <= end_mins:
+                    is_valid_time = True
+                    timetable_id = entry.id
+                    break
+            except ValueError:
+                continue
+                
+        if not is_valid_time:
+            raise HTTPException(
+                status_code=403, 
+                detail="Cannot start attendance: No scheduled class found for this subject and division at the current time. (Allowed up to 30 mins before scheduled start time)."
+            )
+
     new_session = AttendanceSession(
         faculty_id=session_data.faculty_id,
         subject_id=session_data.subject_id,
         division_id=session_data.division_id,
+        timetable_id=timetable_id,
         is_active=True
     )
     

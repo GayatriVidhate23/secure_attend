@@ -212,6 +212,7 @@ class AttendanceSession(Base):
     faculty_id: Mapped[int] = mapped_column(ForeignKey("faculty.user_id", ondelete="CASCADE"))
     subject_id: Mapped[int] = mapped_column(ForeignKey("subjects.id"))
     division_id: Mapped[int] = mapped_column(ForeignKey("divisions.id"))
+    timetable_id: Mapped[Optional[int]] = mapped_column(ForeignKey("timetable_entries.id", ondelete="SET NULL"))
     start_time: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     end_time: Mapped[Optional[datetime]] = mapped_column(DateTime)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

@@ -13,6 +13,7 @@ import AttendanceSessions from './pages/attendance/AttendanceSessions';
 import LiveSessionPage from './pages/attendance/LiveSessionPage';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import TimetableManagement from './pages/timetable/TimetableManagement';
 
 import FacultyLayout from './components/layout/FacultyLayout';
 import FacultyDashboard from './pages/faculty-panel/FacultyDashboard';
@@ -77,6 +78,7 @@ function App() {
             <Route path="live-session" element={<LiveSessionPage />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="timetable" element={<TimetableManagement />} />
           </Route>
           
           <Route path="/faculty-panel" element={<FacultyRoute><FacultyLayout /></FacultyRoute>}>
